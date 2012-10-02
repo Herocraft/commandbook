@@ -27,6 +27,8 @@ import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.minecraft.util.commands.CommandContext;
 import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.minecraft.util.commands.CommandPermissions;
+
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -35,7 +37,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import static com.sk89q.commandbook.util.EntityUtil.matchCreatureType;
+
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 @ComponentInformation(friendlyName = "Fun", desc = "Provides some fun commands to toy with users. (/rocket and /pong are two fun ones)")
 public class FunComponent extends BukkitComponent {
@@ -150,12 +155,19 @@ public class FunComponent extends BukkitComponent {
                 flags = "dirb", min = 1, max = 4)
         @CommandPermissions({"commandbook.spawnmob"})
         public void spawnMob(CommandContext args, CommandSender sender) throws CommandException {
-            Location loc;
+            Set<Location> locs = new HashSet<Location>();
 
             if (args.argsLength() >= 3) {
-                loc = LocationUtil.matchLocation(sender, args.getString(2));
+                if (args.getString(2).equals("*")) {
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        locs.add(player.getLocation());
+                    }
+                }
+                else {
+                    locs.add(LocationUtil.matchLocation(sender, args.getString(2)));
+                }
             } else {
-                loc = PlayerUtil.checkPlayer(sender).getLocation();
+                locs.add(PlayerUtil.checkPlayer(sender).getLocation());
             }
 
             String[] creatureInput = args.getString(0).split("\\|");
@@ -195,11 +207,13 @@ public class FunComponent extends BukkitComponent {
                 CommandBook.inst().checkPermission(sender, "commandbook.spawnmob.many");
             }
 
-            for (int i = 0; i < count; i++) {
-                LivingEntity ridee = spawn(loc, type, specialType, args, sender);
-                if (hasRider) {
-                    LivingEntity rider = spawn(loc, riderType, riderSpecialType, args, sender);
-                    ridee.setPassenger(rider);
+            for (Location loc : locs) {
+                for (int i = 0; i < count; i++) {
+                    LivingEntity ridee = spawn(loc, type, specialType, args, sender);
+                    if (hasRider) {
+                        LivingEntity rider = spawn(loc, riderType, riderSpecialType, args, sender);
+                        ridee.setPassenger(rider);
+                    }
                 }
             }
 
