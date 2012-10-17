@@ -160,7 +160,7 @@ public class FunComponent extends BukkitComponent {
             if (args.argsLength() >= 3) {
                 if (args.getString(2).equals("*")) {
                     for (Player player : Bukkit.getOnlinePlayers()) {
-                        locs.add(player.getLocation());
+                        locs.add(CommandBookUtil.findFreePosition(player.getLocation()));
                     }
                 }
                 else {
@@ -218,6 +218,11 @@ public class FunComponent extends BukkitComponent {
             }
 
             sender.sendMessage(ChatColor.YELLOW + "" + count + " mob(s) spawned!");
+        }
+
+        private Location getLocationBehindPlayer(Player player) {
+            Vector behind = player.getLocation().getDirection().multiply(-2);
+            return player.getLocation().add(behind);
         }
 
         @Command(aliases = {"slap"}, usage = "[target]", desc = "Slap a player", flags = "hdvs", min = 0, max = 1)
