@@ -38,13 +38,16 @@ import com.zachsthings.libcomponents.loader.ClassLoaderComponentLoader;
 import com.zachsthings.libcomponents.loader.ConfigListedComponentLoader;
 import com.zachsthings.libcomponents.loader.JarFilesComponentLoader;
 import com.zachsthings.libcomponents.loader.StaticComponentLoader;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
@@ -343,11 +346,26 @@ public final class CommandBook extends BasePlugin {
 
         // If the user specified an item data or damage value, let's try
         // to parse it!
+        boolean isPlayerSkull = false;
         if (dataName != null) {
-            dmg = matchItemData(id, dataName);
+            try {
+                dmg = matchItemData(id, dataName);
+            } catch (CommandException e) {
+                if (id == Material.SKULL_ITEM.getId() && Bukkit.getOfflinePlayer(dataName).hasPlayedBefore()) {
+                    isPlayerSkull = true;
+                }
+                else {
+                    throw e;
+                }
+            }
         }
 
-        ItemStack stack = new ItemStack(id, 1, (short)dmg);
+        ItemStack stack = new ItemStack(id, 1, isPlayerSkull ? (short)3 : (short)dmg);
+        if (isPlayerSkull) {
+            SkullMeta skullMeta = (SkullMeta) stack.getItemMeta();
+            skullMeta.setOwner(dataName);
+            stack.setItemMeta(skullMeta);
+        }
 
         if (enchantmentName != null) {
             String[] enchantments = enchantmentName.split(",");
